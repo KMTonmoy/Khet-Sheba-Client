@@ -171,27 +171,55 @@ const Weather: React.FC = () => {
     return days[date.getDay()];
   };
 
-  const groupForecastByDay = () => {
-    if (!forecastData) return [];
+  // const groupForecastByDay = () => {
+  //   if (!forecastData) return [];
     
-    const grouped: {[key: string]: ForecastData['list'][0][]} = {};
+  //   const grouped: {[key: string]: ForecastData['list'][0][]} = {};
     
-    forecastData.list.forEach(item => {
-      const dateObj = new Date(item.dt * 1000);
-      const dateStr = dateObj.toLocaleDateString('bn-BD');
+  //   forecastData.list.forEach(item => {
+  //     const dateObj = new Date(item.dt * 1000);
+  //     const dateStr = dateObj.toLocaleDateString('bn-BD');
       
-      if (!grouped[dateStr]) {
-        grouped[dateStr] = [];
-      }
+  //     if (!grouped[dateStr]) {
+  //       grouped[dateStr] = [];
+  //     }
       
-      grouped[dateStr].push(item);
-    });
+  //     grouped[dateStr].push(item);
+  //   });
     
-    return Object.entries(grouped).map(([_, items]) => ({
-      date: new Date(items[0].dt * 1000),
-      items
-    }));
-  };
+  //   return Object.entries(grouped).map(([_, items]) => ({
+  //     date: new Date(items[0].dt * 1000),
+  //     items
+  //   }));
+  // };
+
+
+
+
+const groupForecastByDay = () => {
+  if (!forecastData) return [];
+  
+  const grouped: {[key: string]: ForecastData['list'][0][]} = {};
+  
+  forecastData.list.forEach(item => {
+    const dateObj = new Date(item.dt * 1000);
+    const dateStr = dateObj.toLocaleDateString('bn-BD');
+    
+    if (!grouped[dateStr]) {
+      grouped[dateStr] = [];
+    }
+    
+    grouped[dateStr].push(item);
+  });
+  
+  return Object.values(grouped).map((items) => ({
+    date: new Date(items[0].dt * 1000),
+    items
+  }));
+};
+
+
+
 
   const getMinMaxTemp = (items: ForecastData['list'][0][]) => {
     const temps = items.map(item => item.main.temp);
