@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { WiDaySunny, WiRain, WiCloudy, WiSnow, WiThunderstorm, WiFog } from 'react-icons/wi';
 import { MdLocationOn, MdRefresh, MdArrowUpward, MdArrowDownward, MdWaterDrop, MdAir } from 'react-icons/md';
 import { FiSunrise, FiSunset } from 'react-icons/fi';
@@ -136,7 +136,7 @@ const Weather: React.FC = () => {
     }
   };
 
-  const getLocation = (): void => {
+  const getLocation = useCallback((): void => {
     setLoading(true);
     setError('');
     
@@ -156,7 +156,7 @@ const Weather: React.FC = () => {
       setError('আপনার ব্রাউজার লোকেশন সাপোর্ট করে না. ঢাকার আবহাওয়া দেখানো হচ্ছে।');
       fetchWeather(23.8103, 90.4125);
     }
-  };
+  }, []);
 
   const refreshWeather = (): void => {
     getLocation();
@@ -164,7 +164,7 @@ const Weather: React.FC = () => {
 
   useEffect(() => {
     getLocation();
-  }, []);
+  }, [getLocation]);
 
   const getDayName = (date: Date): string => {
     const days = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
@@ -177,8 +177,8 @@ const Weather: React.FC = () => {
     const grouped: {[key: string]: ForecastData['list'][0][]} = {};
     
     forecastData.list.forEach(item => {
-      const date = new Date(item.dt * 1000);
-      const dateStr = date.toLocaleDateString('bn-BD');
+      const dateObj = new Date(item.dt * 1000);
+      const dateStr = dateObj.toLocaleDateString('bn-BD');
       
       if (!grouped[dateStr]) {
         grouped[dateStr] = [];
@@ -187,7 +187,7 @@ const Weather: React.FC = () => {
       grouped[dateStr].push(item);
     });
     
-    return Object.entries(grouped).map(([date, items]) => ({
+    return Object.entries(grouped).map(([_, items]) => ({
       date: new Date(items[0].dt * 1000),
       items
     }));
