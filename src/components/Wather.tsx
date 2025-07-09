@@ -64,6 +64,7 @@ interface ForecastData {
     clouds: {
       all: number;
     };
+    pop: number;
     dt_txt: string;
   }[];
   city: {
@@ -79,13 +80,12 @@ const Weather: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const [lastUpdated, setLastUpdated] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'current' | 'forecast'>('current');
 
   const API_KEY = 'ac32eebf90c22aae683058105b2fbba0';
   const CURRENT_WEATHER_URL = `https://api.openweathermap.org/data/2.5/weather?units=metric&lang=bn&appid=${API_KEY}`;
   const FORECAST_URL = `https://api.openweathermap.org/data/2.5/forecast?units=metric&lang=bn&appid=${API_KEY}`;
 
-  const getWeatherIcon = (condition: string, size = "text-5xl") => {
+  const getWeatherIcon = (condition: string, size = "text-4xl") => {
     const iconClass = `${size} transition-all duration-300`;
     switch (condition) {
       case 'Clear':
@@ -104,14 +104,6 @@ const Weather: React.FC = () => {
         return <WiFog className={`text-gray-400 ${iconClass}`} />;
       case 'Drizzle':
         return <WiRain className={`text-blue-300 ${iconClass}`} />;
-      case 'Smoke':
-      case 'Dust':
-      case 'Sand':
-      case 'Ash':
-        return <WiFog className={`text-gray-500 ${iconClass}`} />;
-      case 'Squall':
-      case 'Tornado':
-        return <WiThunderstorm className={`text-red-500 ${iconClass}`} />;
       default:
         return <WiDaySunny className={`text-yellow-500 ${iconClass}`} />;
     }
@@ -122,7 +114,6 @@ const Weather: React.FC = () => {
       setLoading(true);
       setError('');
       
-      // Fetch current weather
       const currentResponse = await fetch(`${CURRENT_WEATHER_URL}&lat=${lat}&lon=${lon}`);
       if (!currentResponse.ok) throw new Error('Network response was not ok');
       
@@ -132,7 +123,6 @@ const Weather: React.FC = () => {
       setWeatherData(currentData);
       setLastUpdated(new Date(currentData.dt * 1000).toLocaleTimeString('bn-BD'));
       
-      // Fetch forecast
       const forecastResponse = await fetch(`${FORECAST_URL}&lat=${lat}&lon=${lon}`);
       if (!forecastResponse.ok) throw new Error('Forecast response was not ok');
       
@@ -158,13 +148,13 @@ const Weather: React.FC = () => {
         (err) => {
           console.error('Geolocation error:', err);
           setError('অবস্থান সনাক্ত করতে ব্যর্থ হয়েছে. ঢাকার আবহাওয়া দেখানো হচ্ছে।');
-          fetchWeather(23.8103, 90.4125); // Fallback to Dhaka
+          fetchWeather(23.8103, 90.4125);
         },
         { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
       );
     } else {
       setError('আপনার ব্রাউজার লোকেশন সাপোর্ট করে না. ঢাকার আবহাওয়া দেখানো হচ্ছে।');
-      fetchWeather(23.8103, 90.4125); // Fallback to Dhaka
+      fetchWeather(23.8103, 90.4125);
     }
   };
 
@@ -211,6 +201,19 @@ const Weather: React.FC = () => {
     };
   };
 
+  const getRainProbability = (items: ForecastData['list'][0][]) => {
+    const pops = items.map(item => item.pop * 100);
+    return Math.max(...pops);
+  };
+
+  const getRainProbabilityColor = (percent: number) => {
+    if (percent < 20) return 'bg-blue-100 text-blue-800';
+    if (percent < 40) return 'bg-blue-200 text-blue-800';
+    if (percent < 60) return 'bg-blue-300 text-blue-900';
+    if (percent < 80) return 'bg-blue-400 text-white';
+    return 'bg-blue-600 text-white';
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-64">
@@ -245,181 +248,193 @@ const Weather: React.FC = () => {
   const dailyForecasts = groupForecastByDay();
 
   return (
-    <div className="max-w-md mx-auto bg-gradient-to-br from-blue-50 to-white rounded-xl shadow-lg overflow-hidden">
-      <div className="p-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-5">
-          <h2 className="text-2xl font-bold text-gray-800">আবহাওয়া তথ্য</h2>
+    <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-4 text-white">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center">
+            <MdLocationOn className="text-white mr-2 text-xl" />
+            <h1 className="text-xl font-bold">
+              {weatherData.name}, {weatherData.sys.country}
+            </h1>
+          </div>
           <div className="flex items-center space-x-2">
-            <span className="text-xs text-gray-500">আপডেট: {lastUpdated}</span>
+            <span className="text-sm">আপডেট: {lastUpdated}</span>
             <button 
               onClick={refreshWeather}
-              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-full hover:bg-blue-700 transition-colors"
               title="রিফ্রেশ করুন"
-              aria-label="Refresh weather data"
             >
-              <MdRefresh className="text-green-600 text-xl" />
+              <MdRefresh className="text-white text-xl" />
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Location */}
-        <div className="flex items-center mb-4">
-          <MdLocationOn className="text-red-500 mr-2 text-xl" />
-          <span className="text-lg font-semibold">
-            {weatherData.name}, {weatherData.sys.country}
-          </span>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex mb-6 border-b border-gray-200">
-          <button
-            className={`py-2 px-4 font-medium ${activeTab === 'current' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-            onClick={() => setActiveTab('current')}
-          >
-            বর্তমান অবস্থা
-          </button>
-          <button
-            className={`py-2 px-4 font-medium ${activeTab === 'forecast' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-            onClick={() => setActiveTab('forecast')}
-          >
-            ৫ দিনের পূর্বাভাস
-          </button>
-        </div>
-
-        {activeTab === 'current' ? (
-          <>
-            {/* Current Weather */}
+      {/* Main Content */}
+      <div className="flex flex-col lg:flex-row p-4">
+        {/* Current Weather - Left Side */}
+        <div className="w-full lg:w-1/2 lg:pr-4 mb-6 lg:mb-0">
+          <div className="bg-gray-50 rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center">
-                {getWeatherIcon(weatherData.weather[0].main)}
-                <div className="ml-3">
-                  <span className="text-4xl font-bold">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">বর্তমান আবহাওয়া</h2>
+                <p className="text-gray-600 capitalize">
+                  {new Date().toLocaleDateString('bn-BD', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="flex items-center justify-end">
+                  {getWeatherIcon(weatherData.weather[0].main, "text-5xl")}
+                  <span className="text-4xl font-bold ml-2">
                     {Math.round(weatherData.main.temp)}°C
                   </span>
-                  <p className="text-gray-600 capitalize -mt-1">
-                    {weatherData.weather[0].description}
+                </div>
+                <p className="text-gray-600 capitalize">
+                  {weatherData.weather[0].description}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white p-3 rounded-lg shadow-xs">
+                <p className="text-sm text-gray-500">অনুভূত হচ্ছে</p>
+                <p className="text-xl font-semibold flex items-center">
+                  <IoMdThermometer className="text-red-500 mr-2" />
+                  {Math.round(weatherData.main.feels_like)}°C
+                </p>
+              </div>
+              <div className="bg-white p-3 rounded-lg shadow-xs">
+                <p className="text-sm text-gray-500">আর্দ্রতা</p>
+                <p className="text-xl font-semibold flex items-center">
+                  <MdWaterDrop className="text-blue-500 mr-2" />
+                  {weatherData.main.humidity}%
+                </p>
+              </div>
+              <div className="bg-white p-3 rounded-lg shadow-xs">
+                <p className="text-sm text-gray-500">বাতাস</p>
+                <p className="text-xl font-semibold flex items-center">
+                  <MdAir className="text-gray-500 mr-2" />
+                  {weatherData.wind.speed} m/s
+                </p>
+              </div>
+              <div className="bg-white p-3 rounded-lg shadow-xs">
+                <p className="text-sm text-gray-500">চাপ</p>
+                <p className="text-xl font-semibold">
+                  {weatherData.main.pressure} hPa
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 gap-4">
+              <div className="bg-white p-3 rounded-lg shadow-xs">
+                <p className="text-sm text-gray-500">সর্বনিম্ন তাপমাত্রা</p>
+                <p className="text-xl font-semibold flex items-center">
+                  <MdArrowDownward className="text-blue-500 mr-2" />
+                  {Math.round(weatherData.main.temp_min)}°C
+                </p>
+              </div>
+              <div className="bg-white p-3 rounded-lg shadow-xs">
+                <p className="text-sm text-gray-500">সর্বোচ্চ তাপমাত্রা</p>
+                <p className="text-xl font-semibold flex items-center">
+                  <MdArrowUpward className="text-red-500 mr-2" />
+                  {Math.round(weatherData.main.temp_max)}°C
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-between bg-blue-50 p-3 rounded-lg">
+              <div className="flex items-center">
+                <FiSunrise className="text-yellow-500 mr-2 text-xl" />
+                <div>
+                  <p className="text-sm text-gray-600">সূর্যোদয়</p>
+                  <p className="font-medium">
+                    {new Date(weatherData.sys.sunrise * 1000).toLocaleTimeString('bn-BD', {hour: '2-digit', minute: '2-digit'})}
                   </p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="flex items-center justify-end">
-                  <IoMdThermometer className="mr-1 text-red-500" />
-                  অনুভূত হচ্ছে: {Math.round(weatherData.main.feels_like)}°C
-                </p>
-                <p className="flex items-center justify-end">
-                  <MdWaterDrop className="mr-1 text-blue-500" />
-                  আর্দ্রতা: {weatherData.main.humidity}%
-                </p>
-                <p className="flex items-center justify-end">
-                  <MdAir className="mr-1 text-gray-500" />
-                  বাতাস: {weatherData.wind.speed} m/s
-                </p>
+              <div className="flex items-center">
+                <FiSunset className="text-orange-500 mr-2 text-xl" />
+                <div>
+                  <p className="text-sm text-gray-600">সূর্যাস্ত</p>
+                  <p className="font-medium">
+                    {new Date(weatherData.sys.sunset * 1000).toLocaleTimeString('bn-BD', {hour: '2-digit', minute: '2-digit'})}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Forecast - Right Side */}
+        <div className="w-full lg:w-1/2 lg:pl-4">
+
+           {/* Rain Probability Legend */}
+            <div className="mt-6 bg-blue-50 p-3 rounded-lg">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">বৃষ্টি সম্ভাবনা নির্দেশিকা</h3>
+              <div className="grid grid-cols-5 gap-2 text-xs">
+                <div className="bg-blue-100 text-blue-800 p-1 rounded text-center">0-20%</div>
+                <div className="bg-blue-200 text-blue-800 p-1 rounded text-center">20-40%</div>
+                <div className="bg-blue-300 text-blue-900 p-1 rounded text-center">40-60%</div>
+                <div className="bg-blue-400 text-white p-1 rounded text-center">60-80%</div>
+                <div className="bg-blue-600 text-white p-1 rounded text-center">80-100%</div>
               </div>
             </div>
 
-            {/* Weather Details */}
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-              <div className="bg-blue-50 p-3 rounded-lg flex items-center">
-                <MdArrowDownward className="text-blue-500 mr-2" />
-                <div>
-                  <p className="text-sm text-gray-600">সর্বনিম্ন তাপমাত্রা</p>
-                  <p className="font-bold text-lg">{Math.round(weatherData.main.temp_min)}°C</p>
-                </div>
-              </div>
-              <div className="bg-red-50 p-3 rounded-lg flex items-center">
-                <MdArrowUpward className="text-red-500 mr-2" />
-                <div>
-                  <p className="text-sm text-gray-600">সর্বোচ্চ তাপমাত্রা</p>
-                  <p className="font-bold text-lg">{Math.round(weatherData.main.temp_max)}°C</p>
-                </div>
-              </div>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-sm text-gray-600">বায়ুচাপ</p>
-                <p className="font-bold text-lg">{weatherData.main.pressure} hPa</p>
-              </div>
-              <div className="bg-green-50 p-3 rounded-lg">
-                <p className="text-sm text-gray-600">দৃশ্যমানতা</p>
-                <p className="font-bold text-lg">{(weatherData.visibility / 1000).toFixed(1)} km</p>
-              </div>
-            </div>
 
-            {/* Additional Info */}
-            <div className="mt-5 pt-4 border-t border-gray-200">
-              <div className="flex justify-between text-sm text-gray-600">
-                <div className="flex items-center">
-                  <FiSunrise className="text-yellow-500 mr-2" />
-                  <p>সূর্যোদয়: {new Date(weatherData.sys.sunrise * 1000).toLocaleTimeString('bn-BD')}</p>
-                </div>
-                <div className="flex items-center">
-                  <FiSunset className="text-orange-500 mr-2" />
-                  <p>সূর্যাস্ত: {new Date(weatherData.sys.sunset * 1000).toLocaleTimeString('bn-BD')}</p>
-                </div>
-              </div>
-              <div className="mt-3 flex justify-between">
-                <div className="flex items-center">
-                  <WiHumidity className="text-blue-500 text-xl mr-2" />
-                  <p>মেঘ: {weatherData.clouds.all}%</p>
-                </div>
-                {weatherData.wind.gust && (
-                  <div className="flex items-center">
-                    <MdAir className="text-gray-500 mr-2" />
-                    <p>বাতাসের ঝড়ো গতি: {weatherData.wind.gust} m/s</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="forecast-container">
-            <h3 className="text-lg font-semibold mb-4">৫ দিনের আবহাওয়া পূর্বাভাস</h3>
+          <div className="bg-gray-50 rounded-lg p-6 shadow-sm">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">৫ দিনের পূর্বাভাস</h2>
             
             <div className="space-y-4">
               {dailyForecasts.slice(0, 5).map((day, index) => {
                 const { min, max } = getMinMaxTemp(day.items);
                 const dayName = getDayName(day.date);
-                const dateStr = day.date.toLocaleDateString('bn-BD');
+                const dateStr = day.date.toLocaleDateString('bn-BD', {day: 'numeric', month: 'short'});
                 const mainWeather = day.items[Math.floor(day.items.length / 2)].weather[0].main;
+                const rainProbability = getRainProbability(day.items);
+                const rainColor = getRainProbabilityColor(rainProbability);
                 
                 return (
-                  <div key={index} className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-center mb-2">
+                  <div key={index} className="bg-white rounded-lg p-4 shadow-xs hover:shadow-sm transition-shadow">
+                    <div className="flex justify-between items-center">
                       <div>
-                        <p className="font-medium">{dayName}</p>
+                        <p className="font-semibold">{index === 0 ? 'আজ' : dayName}</p>
                         <p className="text-sm text-gray-500">{dateStr}</p>
                       </div>
-                      <div className="flex items-center">
-                        {getWeatherIcon(mainWeather, "text-3xl")}
+                      
+                      <div className="flex items-center space-x-3">
+                        <div className="text-center">
+                          {getWeatherIcon(mainWeather, "text-3xl")}
+                        </div>
+                        
+                        <div className="text-center min-w-[70px]">
+                          <p className="flex items-center justify-center text-red-500 font-medium">
+                            <MdArrowUpward className="mr-1" />
+                            {Math.round(max)}°C
+                          </p>
+                          <p className="flex items-center justify-center text-blue-500 font-medium">
+                            <MdArrowDownward className="mr-1" />
+                            {Math.round(min)}°C
+                          </p>
+                        </div>
+                        
+                        <div className={`text-center rounded-full w-12 h-12 flex items-center justify-center ${rainColor}`}>
+                          <span className="font-bold text-sm">{Math.round(rainProbability)}%</span>
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="flex justify-between items-center mt-3">
-                      <div className="flex items-center">
-                        <MdArrowUpward className="text-red-500 mr-1" />
-                        <span className="font-medium">{Math.round(max)}°C</span>
-                      </div>
-                      <div className="flex items-center">
-                        <MdArrowDownward className="text-blue-500 mr-1" />
-                        <span className="font-medium">{Math.round(min)}°C</span>
-                      </div>
-                      <div className="flex items-center text-sm">
-                        <WiHumidity className="text-blue-500 text-xl mr-1" />
-                        <span>{day.items[0].main.humidity}%</span>
-                      </div>
-                      <div className="flex items-center text-sm">
-                        <MdAir className="text-gray-500 mr-1" />
-                        <span>{day.items[0].wind.speed} m/s</span>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-3 grid grid-cols-4 gap-2 text-xs">
-                      {day.items.filter((_, i) => i % 2 === 0).slice(0, 4).map((item, i) => (
-                        <div key={i} className="text-center">
-                          <p>{new Date(item.dt * 1000).toLocaleTimeString('bn-BD', {hour: '2-digit'})}</p>
-                          <div className="my-1 mx-auto">
-                            {getWeatherIcon(item.weather[0].main, "text-2xl")}
+                    {/* Hourly forecast */}
+                    <div className="mt-3 flex overflow-x-auto pb-2 space-x-2">
+                      {day.items.filter((_, i) => i % 2 === 0).slice(0, 6).map((item, i) => (
+                        <div key={i} className="flex-shrink-0 text-center bg-gray-50 rounded p-2 w-16">
+                          <p className="text-xs font-medium">
+                            {new Date(item.dt * 1000).toLocaleTimeString('bn-BD', {hour: '2-digit'})}
+                          </p>
+                          <div className="my-1">
+                            {getWeatherIcon(item.weather[0].main, "text-xl")}
                           </div>
-                          <p className="font-medium">{Math.round(item.main.temp)}°C</p>
+                          <p className="text-sm font-semibold">{Math.round(item.main.temp)}°C</p>
                         </div>
                       ))}
                     </div>
@@ -427,8 +442,10 @@ const Weather: React.FC = () => {
                 );
               })}
             </div>
+            
+ 
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
