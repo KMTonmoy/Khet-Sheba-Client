@@ -53,7 +53,7 @@ const ContactForm: React.FC = () => {
               width={800}
               height={1000}
               className="w-full h-full object-cover"
-              priority
+
             />
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-green-900/90 to-transparent p-8 z-20">
               <h2 className="text-3xl font-bold text-white mb-2">ক্ষেত-সেবা</h2>
