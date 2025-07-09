@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { WiDaySunny, WiRain, WiCloudy, WiSnow, WiThunderstorm, WiFog, WiDayCloudyHigh, WiHumidity } from 'react-icons/wi';
+import { WiDaySunny, WiRain, WiCloudy, WiSnow, WiThunderstorm, WiFog } from 'react-icons/wi';
 import { MdLocationOn, MdRefresh, MdArrowUpward, MdArrowDownward, MdWaterDrop, MdAir } from 'react-icons/md';
 import { FiSunrise, FiSunset } from 'react-icons/fi';
 import { IoMdThermometer } from 'react-icons/io';
@@ -248,8 +248,7 @@ const Weather: React.FC = () => {
   const dailyForecasts = groupForecastByDay();
 
   return (
-    <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
-      {/* Header */}
+    <div className="max-w-6xl my-10 mx-auto bg-white rounded-xl shadow-md overflow-hidden">
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-4 text-white">
         <div className="flex justify-between items-center">
           <div className="flex items-center">
@@ -271,9 +270,7 @@ const Weather: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex flex-col lg:flex-row p-4">
-        {/* Current Weather - Left Side */}
         <div className="w-full lg:w-1/2 lg:pr-4 mb-6 lg:mb-0">
           <div className="bg-gray-50 rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between mb-6">
@@ -366,26 +363,22 @@ const Weather: React.FC = () => {
           </div>
         </div>
 
-        {/* Forecast - Right Side */}
         <div className="w-full lg:w-1/2 lg:pl-4">
-
-           {/* Rain Probability Legend */}
-            <div className="mt-6 bg-blue-50 p-3 rounded-lg">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">বৃষ্টি সম্ভাবনা নির্দেশিকা</h3>
-              <div className="grid grid-cols-5 gap-2 text-xs">
-                <div className="bg-blue-100 text-blue-800 p-1 rounded text-center">0-20%</div>
-                <div className="bg-blue-200 text-blue-800 p-1 rounded text-center">20-40%</div>
-                <div className="bg-blue-300 text-blue-900 p-1 rounded text-center">40-60%</div>
-                <div className="bg-blue-400 text-white p-1 rounded text-center">60-80%</div>
-                <div className="bg-blue-600 text-white p-1 rounded text-center">80-100%</div>
-              </div>
+          <div className="mt-6 bg-blue-50 p-3 rounded-lg">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">বৃষ্টি সম্ভাবনা নির্দেশিকা</h3>
+            <div className="grid grid-cols-5 gap-2 text-xs">
+              <div className="bg-blue-100 text-blue-800 p-1 rounded text-center">0-20%</div>
+              <div className="bg-blue-200 text-blue-800 p-1 rounded text-center">20-40%</div>
+              <div className="bg-blue-300 text-blue-900 p-1 rounded text-center">40-60%</div>
+              <div className="bg-blue-400 text-white p-1 rounded text-center">60-80%</div>
+              <div className="bg-blue-600 text-white p-1 rounded text-center">80-100%</div>
             </div>
+          </div>
 
-
-          <div className="bg-gray-50 rounded-lg p-6 shadow-sm">
+          <div className="bg-gray-50 rounded-lg p-6 shadow-sm mt-4">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">৫ দিনের পূর্বাভাস</h2>
             
-            <div className="space-y-4">
+            <div className="h-[500px] overflow-y-auto pr-2">
               {dailyForecasts.slice(0, 5).map((day, index) => {
                 const { min, max } = getMinMaxTemp(day.items);
                 const dayName = getDayName(day.date);
@@ -395,7 +388,7 @@ const Weather: React.FC = () => {
                 const rainColor = getRainProbabilityColor(rainProbability);
                 
                 return (
-                  <div key={index} className="bg-white rounded-lg p-4 shadow-xs hover:shadow-sm transition-shadow">
+                  <div key={index} className="bg-white rounded-lg p-4 shadow-xs hover:shadow-sm transition-shadow mb-4">
                     <div className="flex justify-between items-center">
                       <div>
                         <p className="font-semibold">{index === 0 ? 'আজ' : dayName}</p>
@@ -424,7 +417,6 @@ const Weather: React.FC = () => {
                       </div>
                     </div>
                     
-                    {/* Hourly forecast */}
                     <div className="mt-3 flex overflow-x-auto pb-2 space-x-2">
                       {day.items.filter((_, i) => i % 2 === 0).slice(0, 6).map((item, i) => (
                         <div key={i} className="flex-shrink-0 text-center bg-gray-50 rounded p-2 w-16">
@@ -442,8 +434,6 @@ const Weather: React.FC = () => {
                 );
               })}
             </div>
-            
- 
           </div>
         </div>
       </div>
