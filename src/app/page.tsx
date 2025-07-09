@@ -14,9 +14,9 @@ const page = () => {
       <Services/>
       <USP/>
       <LatestUpdates/>
+      <Weather/>
       <Testimonials/>
       <ContactForm/>
-      <Weather/>
     </div>
   )
 }
